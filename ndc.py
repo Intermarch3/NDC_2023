@@ -29,7 +29,7 @@ class Jeu:
         affiche la partie
         """
         pyxel.cls(0)
-        self.map.draw()
+        self.map.draw(self.player)
         self.player.draw()
 
 
@@ -41,7 +41,6 @@ class Map:
         """
         self.x = 0
         self.y = 160
-        self.number_of_jump = -1
         self.etage_max = 0
     
     
@@ -66,14 +65,14 @@ class Map:
         self.TP(player)
     
     
-    def draw(self):
+    def draw(self, player):
         """
         affiche la map et les textes
         """
         if self.y == 5:
             pyxel.text(110 // 2, 128 // 2, "Vous avez finit le jeu !!!", 7)
         pyxel.bltm(0, 0, 0, self.x * 8, self.y * 8, 128, 128, 2)
-        pyxel.text(0, 1, "jumps : " + str(int(self.number_of_jump)), 7)
+        pyxel.text(0, 1, "jumps : " + str(int(player.number_of_jump)), 7)
         pyxel.text(84, 1, "Etage :" + str(self.etage_max), 7)
 
 
@@ -88,6 +87,7 @@ class Player:
         self.dx = 0
         self.dy = 0
         self.gravity = 0.4
+        self.ice_slide_coef = 0.075
         self.speed = 0
         self.jump_force = 4
         self.on_floor = False
@@ -101,6 +101,8 @@ class Player:
         self.sealing_block = [(0, 3), (1, 3), (2, 3), (0, 5), (1, 5), (2, 5), (3, 5), (0, 8), (4, 5), (5, 5), (6, 5), (5, 8), (6, 8), (7, 8), (9, 6), (8,5),(10,5)]
         self.side_block = [(0, 1), (0, 2), (0, 3), (1, 1), (1, 2), (1, 3), (0, 5), (2, 5), (3, 5), (4, 5), (5, 5), (6, 5), (7, 7), (7, 8), (7, 9), (9, 6),(8,5),(9,5),(10,5)]
         self.can_TP = True
+        self.on_ice = False
+        self.number_of_jump = 0
     
     
     def collision(self,map):
@@ -115,9 +117,12 @@ class Player:
             for i in self.floor_block:
                 for j in range(2):
                     if pyxel.tilemap(0).pget(self.x / 8 + map.x, self.y // 8 + 1 + map.y) == i:
+                        if pyxel.tilemap(0).pget(self.x / 8 + map.x, self.y // 8 + 1 + map.y) in [(5, 6), (6, 6), (7, 6), (5, 7), (6, 7), (7, 7), (5, 8), (6, 8), (7, 8)]:
+                            self.on_ice = True
+                        else:
+                            self.on_ice = False
                         self.on_floor = True
                         self.y = self.y // 8 * 8
-                        map.number_of_jump += 0.5
             #haut
             for i in self.sealing_block:
                 if pyxel.tilemap(0).pget(self.x / 8 + map.x, (self.y - 2) // 8 + map.y) == i:
@@ -156,7 +161,12 @@ class Player:
         if self.on_floor == False:
             self.dy = min(self.dy + self.gravity, 8)
         else:
-            self.dx = 0
+            if self.on_ice:
+                self.dx = max(abs(self.dx) - self.ice_slide_coef, 0) * self.dir
+                self.on_floor = False
+                self.on_ice = False
+            else:
+                self.dx = 0
             self.dy = 0
         #ajout force
         self.y += self.dy
@@ -182,6 +192,7 @@ class Player:
                     self.jump_state = 0
                     self.on_floor = False
                     self.dx += 1 * self.dir
+                    self.number_of_jump += 1
         self.tp()
     
     
