@@ -59,6 +59,7 @@ class Map:
         if player.y > 128 and player.dy > 0:
             self.y += 16
             player.y = 0
+            self.etage_max -= 1
     
     
     def update(self,player):
@@ -73,7 +74,7 @@ class Map:
             pyxel.text(110 // 2, 128 // 2, "Vous avez finit le jeu !!!", 7)
         pyxel.bltm(0, 0, 0, self.x * 8, self.y * 8, 128, 128, 2)
         pyxel.text(0, 1, "jumps : " + str(int(self.number_of_jump)), 7)
-        pyxel.text(82, 1, "Etage max:" + str(self.etage_max), 7)
+        pyxel.text(84, 1, "Etage :" + str(self.etage_max), 7)
 
 
 
@@ -190,6 +191,8 @@ class Player:
         """
         if self.on_floor:
             sprite = self.sprite
+            if self.jump_state == 1:
+                pyxel.rect(self.x - 1, self.y - 2, min(int(self.jump_force), 8), 1, 6)
         else:
             sprite = self.sprite_saut
         pyxel.blt(self.x, self.y, 0, sprite[0], sprite[1], 8, 8, 2)
